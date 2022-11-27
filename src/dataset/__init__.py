@@ -1,10 +1,12 @@
 import time
 import os
+from pathlib import Path
 
 import torch
 from torch.utils.data import Dataset
 from tqdm import tqdm
 import numpy as np
+import zipfile
 
 from src.utils import process_text
 from src.text import text_to_sequence
@@ -75,7 +77,15 @@ def get_data_to_buffer():
 
     return buffer, stats
    
+def get_alignments():
+    alignment_path = Path(hp.alignment_path)
+    if not alignment_path.exist():
+        alignment_path.mkdir()
+        with zipfile.ZipFile("alignments.zip", 'r') as zip_ref:
+            zip_ref.extractall(alignment_path)
+
 def get_dataset():
     preprocess()
+    get_alignments()
     buffer, stats = get_data_to_buffer()
     return BufferDataset(buffer, stats)
