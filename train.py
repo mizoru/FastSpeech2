@@ -39,6 +39,7 @@ optimizer = torch.optim.AdamW(
     eps=1e-9)
 
 current_step = 0
+log_step = 50
 
 scheduler = OneCycleLR(optimizer, **{
     "steps_per_epoch": len(training_loader) * hp.batch_expand_size,
@@ -125,3 +126,6 @@ for epoch in range(hp.epochs):
                 torch.save({'model': model.state_dict(), 'optimizer': optimizer.state_dict(
                 )}, os.path.join(hp.checkpoint_path, 'checkpoint_%d.pth' % current_step))
                 print("save model at step %d ..." % current_step)
+            
+            if current_step-1 % log_step:
+                log_predictions(logger, mel_output, mel_target)
