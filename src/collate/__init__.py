@@ -1,5 +1,6 @@
 import numpy as np
 import torch
+
 from utils import pad_1D_tensor, pad_2D_tensor
 
 def reprocess_tensor(batch, cut_list):
