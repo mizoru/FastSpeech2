@@ -16,7 +16,7 @@ hyperparameter. Some cleaners are English-specific. You'll typically want to use
 # Regular expression matching whitespace:
 import re
 from unidecode import unidecode
-from .numbers import normalize_numbers
+from src.text.numbers import normalize_numbers
 _whitespace_re = re.compile(r'\s+')
 
 # List of (regular expression, replacement) pairs for abbreviations:
