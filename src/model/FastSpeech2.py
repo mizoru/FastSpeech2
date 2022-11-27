@@ -254,31 +254,33 @@ class LengthRegulator(nn.Module):
 class VarianceAdaptor(nn.Module):
     """ Variance Adaptor """
 
-    def __init__(self, model_config, stats):
+    def __init__(self, model_config, stats, offset=1.):
         super(VarianceAdaptor, self).__init__()
         self.pitch_predictor = VariancePredictor(model_config)
         self.energy_predictor = VariancePredictor(model_config)
+        self.offset = offset
         self.register_buffer("pitch_bins", torch.exp(
-            torch.linspace(torch.log(stats["f0"]["min"]), torch.log(stats["f0"]["max"]), model_config.quantization_bins-1)))
+            torch.linspace(torch.log(stats["f0"]["min"]+offset), torch.log(stats["f0"]["max"]+offset), model_config.quantization_bins-1)))
         self.register_buffer("energy_bins", torch.exp(
-            torch.linspace(torch.log(stats["energy"]["min"]), torch.log(stats["energy"]["max"]), model_config.quantization_bins-1)))
+            torch.linspace(torch.log(stats["energy"]["min"]+offset), torch.log(stats["energy"]["max"]+offset), model_config.quantization_bins-1)))
         self.pitch_embed = nn.Embedding(
             model_config.quantization_bins, model_config.encoder_dim)
         self.energy_embed = nn.Embedding(
             model_config.quantization_bins, model_config.encoder_dim)
 
     def forward(self, x, beta=1.0, gamma=1.0, pitch=None, energy=None):
+        offset = self.offset
         pitch_pred = self.pitch_predictor(x)
         energy_pred = self.pitch_predictor(x)
         if pitch is not None and energy is not None:
-            pitch = torch.bucketize(pitch, self.pitch_bins)
-            energy = torch.bucketize(pitch, self.energy_bins)
+            pitch = torch.bucketize(pitch+offset, self.pitch_bins)
+            energy = torch.bucketize(pitch+offset, self.energy_bins)
             x = x + self.pitch_embed(pitch)
             x = x + self.pitch_embed(energy)
             return x, pitch_pred, energy_pred
         elif pitch is None and energy is None:
-            pitch = torch.bucketize(pitch_pred*beta, self.pitch_bins)
-            energy = torch.bucketize(energy_pred*gamma, self.energy_bins)
+            pitch = torch.bucketize(pitch_pred*beta+offset, self.pitch_bins)
+            energy = torch.bucketize(energy_pred*gamma+offset, self.energy_bins)
             x = x + self.pitch_embed(pitch)
             x = x + self.pitch_embed(energy)
             return x
