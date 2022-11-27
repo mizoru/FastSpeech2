@@ -68,13 +68,13 @@ for epoch in range(hp.epochs):
 
             logger.set_step(current_step)
             # Get Data
-            character = db["text"].long().to(hp.device)
-            mel_target = db["mel_target"].float().to(hp.device)
-            duration = db["duration"].int().to(hp.device)
-            pitch = db["f0"].to(hp.device)
-            energy = db["energy"].to(hp.device)
-            mel_pos = db["mel_pos"].long().to(hp.device)
-            src_pos = db["src_pos"].long().to(hp.device)
+            character = db["text"].long().to(device)
+            mel_target = db["mel_target"].float().to(device)
+            duration = db["duration"].int().to(device)
+            pitch = db["f0"].to(device)
+            energy = db["energy"].to(device)
+            mel_pos = db["mel_pos"].long().to(device)
+            src_pos = db["src_pos"].long().to(device)
             max_mel_len = db["mel_max_len"]
 
             # Forward
