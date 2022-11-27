@@ -28,7 +28,7 @@ training_loader = DataLoader(
 )
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-model = FastSpeech(hp, dataset.stats)
+model = FastSpeech(hp, dataset.stats).to(device)
 criterion = FastSpeechLoss()
 logger = WanDBWriter(hp)
 
