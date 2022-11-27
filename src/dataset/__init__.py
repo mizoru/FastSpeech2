@@ -4,9 +4,9 @@ import torch
 from torch.utils.data import Dataset
 import tqdm
 
-from utils import process_text
-from text import text_to_sequence
-from data.preprocess import main as preprocess
+from src.utils import process_text
+from src.text import text_to_sequence
+from src.data.preprocess import main as preprocess
 
 class BufferDataset(Dataset):
     def __init__(self, buffer, stats):

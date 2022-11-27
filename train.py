@@ -1,3 +1,3 @@
-from dataset import get_dataset
+from src.dataset import get_dataset
 
 ds = get_dataset
