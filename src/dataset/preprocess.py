@@ -31,7 +31,7 @@ def download_ljspeech():
     ljspeech_dir = Path(hp.data_path) / "LJSpeech-1.1"
     archive = Path(hp.data_path) / "LJSpeech-1.1.tar.bz2"
     if not ljspeech_dir.exists():
-        download_file("https://data.keithito.com/data/speech/LJSpeech-1.1.tar.bz2", dest=archive
+        download_file("https://data.keithito.com/data/speech/LJSpeech-1.1.tar.bz2", dest=archive,
                       unpack = True, dest_unpack=ljspeech_dir)
     return ljspeech_dir
         
