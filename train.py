@@ -43,6 +43,7 @@ log_step = 50
 
 scheduler = OneCycleLR(optimizer, **{
     "steps_per_epoch": len(training_loader) * hp.batch_expand_size,
+    "pct_start": hp.n_warm_up_step / (len(training_loader) * hp.batch_expand_size * hp.epochs)
     "epochs": hp.epochs,
     "anneal_strategy": "cos",
     "max_lr": hp.learning_rate,
