@@ -6,7 +6,7 @@ import torch
 import numpy as np
 from speechbrain.utils.data_utils import download_file
 
-from dataset import ljspeech
+from src.dataset import ljspeech
 import src.hparams as hp
 
 
