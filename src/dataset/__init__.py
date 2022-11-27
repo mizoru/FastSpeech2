@@ -4,7 +4,7 @@ import os
 import torch
 from torch.utils.data import Dataset
 import tqdm
-import np
+import numpy as np
 
 from src.utils import process_text
 from src.text import text_to_sequence
