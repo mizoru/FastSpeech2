@@ -35,7 +35,7 @@ class WanDBWriter:
             self.timer = datetime.now()
 
     def scalar_name(self, scalar_name):
-        return f"{self.mode}/{scalar_name}"
+        return f"{self.mode}_{scalar_name}"
 
     def add_scalar(self, scalar_name, scalar):
         self.wandb.log({
@@ -78,7 +78,7 @@ class WanDBWriter:
         }, step=self.step)
         
     def add_table(self, table_name, table: pd.DataFrame):
-        self.wandb.log({self._scalar_name(table_name): wandb.Table(dataframe=table)},
+        self.wandb.log({self.scalar_name(table_name): wandb.Table(dataframe=table)},
                        step=self.step)
 
     def add_images(self, scalar_name, images):
