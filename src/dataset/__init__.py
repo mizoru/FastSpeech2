@@ -7,6 +7,7 @@ import tqdm
 from src.utils import process_text
 from src.text import text_to_sequence
 from src.dataset.preprocess import main as preprocess
+import src.hparams as hp
 
 class BufferDataset(Dataset):
     def __init__(self, buffer, stats):
@@ -20,9 +21,9 @@ class BufferDataset(Dataset):
     def __getitem__(self, idx):
         return self.buffer[idx]
 
-def get_data_to_buffer(train_config):
+def get_data_to_buffer():
     buffer = list()
-    text = process_text(train_config.data_path)
+    text = process_text(hp.data_path)
 
     min_f0 = torch.inf
     max_f0 = -torch.inf
@@ -34,17 +35,17 @@ def get_data_to_buffer(train_config):
     for i in tqdm(range(1, len(text)+1)):
 
         mel_gt_name = os.path.join(
-            train_config.mel_ground_truth, "ljspeech-mel-%05d.npy" % (i))
+            hp.mel_ground_truth, "ljspeech-mel-%05d.npy" % (i))
         mel_gt_target = np.load(mel_gt_name)
         duration = np.load(os.path.join(
-            train_config.alignment_path, str(i)+".npy"))
+            hp.alignment_path, str(i)+".npy"))
         f0 = np.load(os.path.join(
-            train_config.f0s_path, str(i)+".npy")).astype(np.float32)
+            hp.f0s_path, str(i)+".npy")).astype(np.float32)
         energy = np.load(os.path.join(
-            train_config.energies_path, str(i)+".npy"))
+            hp.energies_path, str(i)+".npy"))
         character = text[i][0:len(text[i])-1]
         character = np.array(
-            text_to_sequence(character, train_config.text_cleaners))
+            text_to_sequence(character, hp.text_cleaners))
 
         character = torch.from_numpy(character)
         duration = torch.from_numpy(duration)
@@ -72,7 +73,7 @@ def get_data_to_buffer(train_config):
 
     return buffer, stats
    
-def get_dataset(train_config):
+def get_dataset():
     preprocess()
-    buffer, stats = get_data_to_buffer(train_config)
+    buffer, stats = get_data_to_buffer()
     return BufferDataset(buffer, stats)
