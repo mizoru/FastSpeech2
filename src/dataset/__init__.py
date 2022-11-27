@@ -82,7 +82,7 @@ def get_alignments():
     if not alignment_path.exists():
         alignment_path.mkdir()
         with zipfile.ZipFile("alignments.zip", 'r') as zip_ref:
-            zip_ref.extractall(alignment_path)
+            zip_ref.extractall(alignment_path.parent)
 
 def get_dataset():
     preprocess()
