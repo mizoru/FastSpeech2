@@ -79,7 +79,7 @@ def get_data_to_buffer():
    
 def get_alignments():
     alignment_path = Path(hp.alignment_path)
-    if not alignment_path.exist():
+    if not alignment_path.exists():
         alignment_path.mkdir()
         with zipfile.ZipFile("alignments.zip", 'r') as zip_ref:
             zip_ref.extractall(alignment_path)
