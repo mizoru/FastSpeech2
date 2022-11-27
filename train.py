@@ -13,7 +13,7 @@ from src import hparams as hp
 from src.loss.loss import FastSpeechLoss
 from src.visualizer.wandb import WanDBWriter
 from src.collate import collate_fn
-from src.utils import _log_predictions
+from src.utils import log_predictions
 
 
 dataset = get_dataset()

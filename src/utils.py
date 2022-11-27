@@ -135,7 +135,7 @@ def pad(input_ele, mel_max_length=None):
         out_padded = torch.stack(out_list)
         return out_padded
     
-def _log_predictions(
+def log_predictions(
     logger,
     preds,
     targets,
