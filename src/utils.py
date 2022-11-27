@@ -1,9 +1,12 @@
+import os
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
-import os
+import pandas as pd
 
+from src import audio
 import src.hparams
 
 
@@ -131,3 +134,30 @@ def pad(input_ele, mel_max_length=None):
             out_list.append(one_batch_padded)
         out_padded = torch.stack(out_list)
         return out_padded
+    
+def _log_predictions(
+    logger,
+    preds,
+    targets,
+    examples_to_log=4,
+    *args,
+    **kwargs,
+):
+    rows = {}
+    index = 0
+    for pred, target in zip(preds, targets):
+        if index >= examples_to_log:
+            break
+        
+        pred = audio.tools.inv_mel_spec(pred.cpu()[0].T)
+        target = audio.tools.inv_mel_spec(target.cpu()[0].T)
+        pred = logger.wandb.Audio(pred, sample_rate=audio.hparams_audio.sampling_rate)
+        target = logger.wandb.Audio(target, sample_rate=audio.hparams_audio.sampling_rate)
+    
+        rows[index] = {
+            "ground_truth": target,
+            "prediction": pred
+        }
+        index += 1
+    logger.add_table(
+        "predictions", pd.DataFrame.from_dict(rows, orient="index")

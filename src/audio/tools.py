@@ -49,7 +49,7 @@ def get_mel_from_wav(audio):
     return melspec
 
 
-def inv_mel_spec(mel, out_filename, griffin_iters=60):
+def inv_mel_spec(mel, out_filename=None, griffin_iters=60):
     mel = torch.stack([mel])
     # mel = torch.stack([torch.from_numpy(_denormalize(mel.numpy()))])
     mel_decompress = _stft.spectral_de_normalize(mel)
@@ -64,5 +64,6 @@ def inv_mel_spec(mel, out_filename, griffin_iters=60):
 
     audio = audio.squeeze()
     audio = audio.cpu().numpy()
-    audio_path = out_filename
-    write(audio_path, hparams.sampling_rate, audio)
+    if out_filename:
+        write(out_filename, hparams.sampling_rate, audio)
+    else: return audio

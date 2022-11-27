@@ -14,8 +14,7 @@ class WanDBWriter:
             raise ValueError("please specify project name for wandb")
 
         wandb.init(
-            project=getattr(config, 'wandb_project'),
-            config=config
+            project=getattr(config, 'wandb_project')
         )
         self.wandb = wandb
 
@@ -75,6 +74,10 @@ class WanDBWriter:
         self.wandb.log({
             self.scalar_name(scalar_name): hist
         }, step=self.step)
+        
+    def add_table(self, table_name, table: pd.DataFrame):
+        self.wandb.log({self._scalar_name(table_name): wandb.Table(dataframe=table)},
+                       step=self.step)
 
     def add_images(self, scalar_name, images):
         raise NotImplementedError()
