@@ -1,3 +1,12 @@
+from collections import OrderedDict
+
+import torch
+from torch import nn
+from torch.nn import functional as F
+import numpy as np
+
+import src.hparams as model_config
+
 class ScaledDotProductAttention(nn.Module):
     ''' Scaled Dot-Product Attention '''
 
@@ -9,7 +18,7 @@ class ScaledDotProductAttention(nn.Module):
 
     def forward(self, q, k, v, mask=None):
         # q, k, v: [ batch_size x n_heads x seq_len x hidden_size ]
-        
+
         attn = q @ k.transpose(-1, -2)
         attn /= self.temperature
 
@@ -22,7 +31,8 @@ class ScaledDotProductAttention(nn.Module):
         # output: [ batch_size x n_heads x seq_len x hidden_size ]
         output = attn @ v
         return output, attn
-    
+
+
 class MultiHeadAttention(nn.Module):
     ''' Multi-Head Attention module '''
 
@@ -36,21 +46,21 @@ class MultiHeadAttention(nn.Module):
         self.QKV = nn.Linear(d_model, 3 * d_model)
 
         self.attention = ScaledDotProductAttention(
-            temperature=self.d_k**0.5) # TODO: fix
+            temperature=self.d_k**0.5)  # TODO: fix
         self.layer_norm = nn.LayerNorm(d_model)
 
         self.fc = nn.Linear(d_model, d_model)
         nn.init.xavier_normal_(self.fc.weight)
 
         self.dropout = nn.Dropout(dropout)
-        
+
         self.reset_parameters()
 
     def reset_parameters(self):
-         # normal distribution initialization better than kaiming(default in pytorch)
+        # normal distribution initialization better than kaiming(default in pytorch)
         nn.init.normal_(self.QKV.weight, mean=0,
                         std=np.sqrt(2.0 / (self.d_model + self.d_k)))
-        
+
     def forward(self, x, mask=None):
         d_model, n_head = self.d_model, self.n_head
 
@@ -61,10 +71,10 @@ class MultiHeadAttention(nn.Module):
         x = self.layer_norm(x)
 
         q, k, v = self.QKV(x).split(d_model, dim=2)
-        q = q.view(B, T, n_head, C // n_head).transpose(1,2)
-        k = k.view(B, T, n_head, C // n_head).transpose(1,2)
-        v = v.view(B, T, n_head, C // n_head).transpose(1,2)
-        
+        q = q.view(B, T, n_head, C // n_head).transpose(1, 2)
+        k = k.view(B, T, n_head, C // n_head).transpose(1, 2)
+        v = v.view(B, T, n_head, C // n_head).transpose(1, 2)
+
         if mask is not None:
             mask = mask.repeat(1, n_head, 1, 1)  # b x n x .. x ..
         output, attn = self.attention(q, k, v, mask=mask)
@@ -75,7 +85,7 @@ class MultiHeadAttention(nn.Module):
         output = (output + residual)
 
         return output, attn
-    
+
 
 class PositionwiseFeedForward(nn.Module):
     ''' A two-feed-forward-layer module '''
@@ -101,10 +111,9 @@ class PositionwiseFeedForward(nn.Module):
         output = self.w_2(F.relu(self.w_1(output)))
         output = output.transpose(1, 2)
         output = self.dropout(output)
-        output = (output + residual)
-
+        output = output + residual
         return output
-    
+
 
 class FFTBlock(torch.nn.Module):
     """FFT Block"""
@@ -123,17 +132,17 @@ class FFTBlock(torch.nn.Module):
     def forward(self, enc_input, non_pad_mask=None, slf_attn_mask=None):
         enc_output, enc_slf_attn = self.slf_attn(
             enc_input, mask=slf_attn_mask)
-        
+
         if non_pad_mask is not None:
             enc_output *= non_pad_mask
 
         enc_output = self.pos_ffn(enc_output)
-        
+
         if non_pad_mask is not None:
             enc_output *= non_pad_mask
 
         return enc_output, enc_slf_attn
-    
+
 
 def create_alignment(base_mat, duration_predictor_output):
     N, L = duration_predictor_output.shape
@@ -144,6 +153,7 @@ def create_alignment(base_mat, duration_predictor_output):
                 base_mat[i][count+k][j] = 1
             count = count + duration_predictor_output[i][j]
     return base_mat
+
 
 class Transpose(nn.Module):
     def __init__(self, dim_1, dim_2):
@@ -158,7 +168,7 @@ class Transpose(nn.Module):
 class VariancePredictor(nn.Module):
     """ Duration/pitch/energy Predictor """
 
-    def __init__(self, model_config: FastSpeechConfig):
+    def __init__(self, model_config):
         super(VariancePredictor, self).__init__()
 
         self.input_size = model_config.encoder_dim
@@ -170,18 +180,18 @@ class VariancePredictor(nn.Module):
         self.conv_layer = nn.ModuleDict(OrderedDict([
             ("transpose1", Transpose(-1, -2)),
             ("conv1d_1", nn.Conv1d(self.input_size,
-                              self.filter_size,
-                              kernel_size=self.kernel,
-                              padding=1)),
+                                   self.filter_size,
+                                   kernel_size=self.kernel,
+                                   padding=1)),
             ("transpose2", Transpose(-1, -2)),
             ("layer_norm_1", nn.LayerNorm(self.filter_size)),
             ("relu_1", nn.ReLU()),
             ("dropout_1", nn.Dropout(self.dropout)),
             ("transpose3", Transpose(-1, -2)),
             ("conv1d_2", nn.Conv1d(self.filter_size,
-                              self.filter_size,
-                              kernel_size=self.kernel,
-                              padding=1)),
+                                   self.filter_size,
+                                   kernel_size=self.kernel,
+                                   padding=1)),
             ("transpose4", Transpose(-1, -2)),
             ("layer_norm_2", nn.LayerNorm(self.filter_size)),
             ("relu_2", nn.ReLU()),
@@ -194,14 +204,15 @@ class VariancePredictor(nn.Module):
     def forward(self, encoder_output):
         for key, layer in self.conv_layer.items():
             encoder_output = layer(encoder_output)
-            
+
         out = self.linear_layer(encoder_output)
         out = self.relu(out)
         out = out.squeeze()
         if not self.training:
             out = out.unsqueeze(0)
         return out
-    
+
+
 class LengthRegulator(nn.Module):
     """ Length Regulator """
 
@@ -232,11 +243,13 @@ class LengthRegulator(nn.Module):
             output = self.LR(x, target, mel_max_length)
             return output, duration_predictor_output
         else:
-            duration_predictor_output = (duration_predictor_output*alpha + 0.5).int()
+            duration_predictor_output = (
+                duration_predictor_output*alpha + 0.5).int()
             output = self.LR(x, duration_predictor_output, mel_max_length)
-            mel_pos = torch.stack([torch.tensor([i+1 for i in range(output.size(1))], device=train_config.device, dtype=torch.int64)])
+            mel_pos = torch.stack([torch.tensor(
+                [i+1 for i in range(output.size(1))], device=x.device, dtype=torch.int64)])
             return output, mel_pos
-        
+
 
 class VarianceAdaptor(nn.Module):
     """ Variance Adaptor """
@@ -249,8 +262,10 @@ class VarianceAdaptor(nn.Module):
             torch.linspace(torch.log(stats["f0"]["min"]), torch.log(stats["f0"]["max"]), model_config.quantization_bins-1)))
         self.register_buffer("energy_bins", torch.exp(
             torch.linspace(torch.log(stats["energy"]["min"]), torch.log(stats["energy"]["max"]), model_config.quantization_bins-1)))
-        self.pitch_embed = nn.Embedding(model_config.quantization_bins, model_config.encoder_dim)
-        self.energy_embed = nn.Embedding(model_config.quantization_bins, model_config.encoder_dim)
+        self.pitch_embed = nn.Embedding(
+            model_config.quantization_bins, model_config.encoder_dim)
+        self.energy_embed = nn.Embedding(
+            model_config.quantization_bins, model_config.encoder_dim)
 
     def forward(self, x, beta=1.0, gamma=1.0, pitch=None, energy=None):
         pitch_pred = self.pitch_predictor(x)
@@ -269,10 +284,12 @@ class VarianceAdaptor(nn.Module):
             return x
         else:
             raise Exception("Either both or none of energy, pitch")
-        
+
+
 def get_non_pad_mask(seq):
     assert seq.dim() == 2
     return seq.ne(model_config.PAD).type(torch.float).unsqueeze(-1)
+
 
 def get_attn_key_pad_mask(seq_k, seq_q):
     ''' For masking out the padding part of key sequence. '''
@@ -284,11 +301,12 @@ def get_attn_key_pad_mask(seq_k, seq_q):
 
     return padding_mask
 
+
 class Encoder(nn.Module):
     def __init__(self, model_config):
         super(Encoder, self).__init__()
-        
-        len_max_seq=model_config.max_seq_len
+
+        len_max_seq = model_config.max_seq_len
         n_position = len_max_seq + 1
         n_layers = model_config.encoder_n_layer
 
@@ -318,7 +336,7 @@ class Encoder(nn.Module):
         # -- Prepare masks
         slf_attn_mask = get_attn_key_pad_mask(seq_k=src_seq, seq_q=src_seq)
         non_pad_mask = get_non_pad_mask(src_seq)
-        
+
         # -- Forward
         enc_output = self.src_word_emb(src_seq) + self.position_enc(src_pos)
 
@@ -329,11 +347,10 @@ class Encoder(nn.Module):
                 slf_attn_mask=slf_attn_mask)
             if return_attns:
                 enc_slf_attn_list += [enc_slf_attn]
-        
 
         return enc_output, non_pad_mask
-    
-    
+
+
 class Decoder(nn.Module):
     """ Decoder """
 
@@ -341,7 +358,7 @@ class Decoder(nn.Module):
 
         super(Decoder, self).__init__()
 
-        len_max_seq=model_config.max_seq_len
+        len_max_seq = model_config.max_seq_len
         n_position = len_max_seq + 1
         n_layers = model_config.decoder_n_layer
 
@@ -389,6 +406,7 @@ def get_mask_from_lengths(lengths, max_len=None):
 
     return mask
 
+
 class FastSpeech(nn.Module):
     """ FastSpeech """
 
@@ -400,7 +418,8 @@ class FastSpeech(nn.Module):
         self.variance_adaptor = VarianceAdaptor(model_config, stats)
         self.decoder = Decoder(model_config)
 
-        self.mel_linear = nn.Linear(model_config.decoder_dim, mel_config.num_mels)
+        self.mel_linear = nn.Linear(
+            model_config.decoder_dim, model_config.num_mels)
 
     def mask_tensor(self, mel_output, position, mel_max_length):
         lengths = torch.max(position, -1)[0]
@@ -413,17 +432,20 @@ class FastSpeech(nn.Module):
         x, non_pad_mask = self.encoder(src_seq, src_pos)
 
         if self.training:
-            output, duration_predictor_output = self.length_regulator(x, alpha, length_target, mel_max_length)
-            output, pitch_prediction, energy_prediction = self.variance_adaptor(output, beta=beta, gamma=gamma, pitch=pitch_target, energy=energy_target)
+            output, duration_predictor_output = self.length_regulator(
+                x, alpha, length_target, mel_max_length)
+            output, pitch_prediction, energy_prediction = self.variance_adaptor(
+                output, beta=beta, gamma=gamma, pitch=pitch_target, energy=energy_target)
             output = self.decoder(output, mel_pos)
 
             output = self.mask_tensor(output, mel_pos, mel_max_length)
-            
+
             output = self.mel_linear(output)
             return output, duration_predictor_output, pitch_prediction, energy_prediction
         else:
             output, mel_pos = self.length_regulator(x, alpha)
-            output = self.variance_adaptor(self, output, beta=beta, gamma=gamma)
+            output = self.variance_adaptor(
+                self, output, beta=beta, gamma=gamma)
             output = self.decoder(output, mel_pos)
             output = self.mel_linear(output)
             return output

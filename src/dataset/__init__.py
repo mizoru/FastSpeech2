@@ -1,8 +1,10 @@
 import time
+import os
 
 import torch
 from torch.utils.data import Dataset
 import tqdm
+import np
 
 from src.utils import process_text
 from src.text import text_to_sequence
@@ -23,7 +25,7 @@ class BufferDataset(Dataset):
 
 def get_data_to_buffer():
     buffer = list()
-    text = process_text(hp.data_path)
+    text = process_text(hp.data_path+"train.txt")
 
     min_f0 = torch.inf
     max_f0 = -torch.inf

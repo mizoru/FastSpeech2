@@ -1,3 +1,5 @@
+wandb_project = "FastSpeech2"
+
 # Mel
 num_mels = 80
 text_cleaners = ['english_cleaners']
@@ -33,6 +35,16 @@ alignment_path = "./data/alignments"
 audio_path = './data/LJSpeech-1.1/wavs'
 f0s_path = "./data/f0s"
 energies_path = "./data/energies"
+
+PAD = 0
+UNK = 1
+BOS = 2
+EOS = 3
+
+PAD_WORD = '<blank>'
+UNK_WORD = '<unk>'
+BOS_WORD = '<s>'
+EOS_WORD = '</s>'
 
 batch_size = 32
 epochs = 2000

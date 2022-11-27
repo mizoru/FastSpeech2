@@ -2,6 +2,7 @@ import numpy as np
 import torch
 
 from src.utils import pad_1D_tensor, pad_2D_tensor
+from src import hparams as hp
 
 def reprocess_tensor(batch, cut_list):
     texts = [batch[ind]["text"] for ind in cut_list]
@@ -49,20 +50,19 @@ def reprocess_tensor(batch, cut_list):
 
     return out
 
-def get_collate_fn(train_config):
-    def collate_fn(batch):
-        len_arr = np.array([d["text"].size(0) for d in batch])
-        index_arr = np.argsort(-len_arr)
-        batchsize = len(batch)
-        real_batchsize = batchsize // train_config.batch_expand_size
 
-        cut_list = list()
-        for i in range(train_config.batch_expand_size):
-            cut_list.append(index_arr[i*real_batchsize:(i+1)*real_batchsize])
+def collate_fn(batch):
+    len_arr = np.array([d["text"].size(0) for d in batch])
+    index_arr = np.argsort(-len_arr)
+    batchsize = len(batch)
+    real_batchsize = batchsize // hp.batch_expand_size
 
-        output = list()
-        for i in range(train_config.batch_expand_size):
-            output.append(reprocess_tensor(batch, cut_list[i]))
+    cut_list = list()
+    for i in range(hp.batch_expand_size):
+        cut_list.append(index_arr[i*real_batchsize:(i+1)*real_batchsize])
 
-        return output
-    return collate_fn
+    output = list()
+    for i in range(hp.batch_expand_size):
+        output.append(reprocess_tensor(batch, cut_list[i]))
+
+    return output
