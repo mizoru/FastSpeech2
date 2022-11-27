@@ -150,8 +150,8 @@ def log_predictions(
         if index >= examples_to_log:
             break
         
-        pred = audio.tools.inv_mel_spec(pred.cpu()[0].T)
-        target = audio.tools.inv_mel_spec(target.cpu()[0].T)
+        pred = audio.tools.inv_mel_spec(pred.cpu()[0].transpose(0, 1))
+        target = audio.tools.inv_mel_spec(target.cpu()[0].transpose(0, 1))
         pred = logger.wandb.Audio(pred, sample_rate=audio.hparams_audio.sampling_rate)
         target = logger.wandb.Audio(target, sample_rate=audio.hparams_audio.sampling_rate)
     
