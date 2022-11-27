@@ -47,7 +47,7 @@ def get_data_to_buffer():
             hp.f0s_path, str(i)+".npy")).astype(np.float32)
         energy = np.load(os.path.join(
             hp.energies_path, str(i)+".npy"))
-        character = text[i][0:len(text[i])-1]
+        character = text[i-1][0:len(text[i-1])-1]
         character = np.array(
             text_to_sequence(character, hp.text_cleaners))
 
