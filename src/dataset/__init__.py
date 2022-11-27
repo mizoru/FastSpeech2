@@ -3,7 +3,7 @@ import os
 
 import torch
 from torch.utils.data import Dataset
-import tqdm
+from tqdm import tqdm
 import numpy as np
 
 from src.utils import process_text
