@@ -87,6 +87,7 @@ for epoch in range(hp.epochs):
                                                             pitch_target=pitch,
                                                             energy_target=energy
                                                             )
+                print(mel_output)
 
                 # Cal Loss
                 mel_loss, duration_loss, pitch_loss, energy_loss = criterion(mel_output,
