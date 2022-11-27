@@ -135,14 +135,15 @@ def pad(input_ele, mel_max_length=None):
         out_padded = torch.stack(out_list)
         return out_padded
     
+    
 def log_predictions(
     logger,
     preds,
     targets,
     examples_to_log=4,
     *args,
-    **kwargs,
-):
+    **kwargs
+    ):
     rows = {}
     index = 0
     for pred, target in zip(preds, targets):
@@ -159,5 +160,4 @@ def log_predictions(
             "prediction": pred
         }
         index += 1
-    logger.add_table(
-        "predictions", pd.DataFrame.from_dict(rows, orient="index")
+    logger.add_table("predictions", pd.DataFrame.from_dict(rows, orient="index"))
