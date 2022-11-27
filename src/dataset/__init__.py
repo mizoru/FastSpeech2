@@ -42,7 +42,7 @@ def get_data_to_buffer():
             hp.mel_ground_truth, "ljspeech-mel-%05d.npy" % (i))
         mel_gt_target = np.load(mel_gt_name)
         duration = np.load(os.path.join(
-            hp.alignment_path, str(i)+".npy"))
+            hp.alignment_path, str(i-1)+".npy"))
         f0 = np.load(os.path.join(
             hp.f0s_path, str(i)+".npy")).astype(np.float32)
         energy = np.load(os.path.join(
