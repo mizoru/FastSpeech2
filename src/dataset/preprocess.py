@@ -15,11 +15,11 @@ def preprocess_ljspeech(filename):
     out_dir = hp.mel_ground_truth
     if not os.path.exists(out_dir):
         os.makedirs(out_dir, exist_ok=True)
-    metadata = ljspeech.build_from_path(in_dir, out_dir)
-    write_metadata(metadata, out_dir)
+        metadata = ljspeech.build_from_path(in_dir, out_dir)
+        write_metadata(metadata, out_dir)
 
-    shutil.move(os.path.join(hp.mel_ground_truth, "train.txt"),
-                os.path.join("data", "train.txt"))
+        shutil.move(os.path.join(hp.mel_ground_truth, "train.txt"),
+                    os.path.join("data", "train.txt"))
 
 
 def write_metadata(metadata, out_dir):
