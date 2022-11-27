@@ -25,7 +25,7 @@ class BufferDataset(Dataset):
 
 def get_data_to_buffer():
     buffer = list()
-    text = process_text(hp.data_path+"train.txt")
+    text = process_text(hp.data_path+"/train.txt")
 
     min_f0 = torch.inf
     max_f0 = -torch.inf
