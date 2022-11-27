@@ -123,13 +123,13 @@ for epoch in range(hp.epochs):
                 optimizer.zero_grad(set_to_none=True)
                 scheduler.step()
 
-                if current_step-10 % hp.save_step == 0:
+                if (current_step) % hp.save_step == 0:
                     os.makedirs(hp.checkpoint_path, exist_ok=True)
                     torch.save({'model': model.state_dict(), 'optimizer': optimizer.state_dict(
                     )}, os.path.join(hp.checkpoint_path, 'checkpoint_%d.pth' % current_step))
                     print("save model at step %d ..." % current_step)
                 
-                if current_step-1 % log_step == 0:
+                if (current_step) % log_step == 0:
                     log_predictions(logger, mel_output, mel_target)
             except Exception as exc:
                 os.makedirs(hp.checkpoint_path, exist_ok=True)
