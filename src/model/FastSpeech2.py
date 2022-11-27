@@ -14,7 +14,7 @@ class ScaledDotProductAttention(nn.Module):
         super().__init__()
         self.temperature = temperature
         self.dropout = nn.Dropout(attn_dropout)
-        self.softmax = nn.Softmax(dim=2)
+        self.softmax = nn.Softmax(dim=-1)
 
     def forward(self, q, k, v, mask=None):
         # q, k, v: [ batch_size x n_heads x seq_len x hidden_size ]
