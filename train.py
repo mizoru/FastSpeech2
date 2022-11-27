@@ -40,7 +40,7 @@ optimizer = torch.optim.AdamW(
     eps=1e-9)
 
 current_step = 0
-log_step = 50
+log_step = 300
 
 scheduler = OneCycleLR(optimizer, **{
     "steps_per_epoch": len(training_loader) * hp.batch_expand_size,
@@ -106,8 +106,8 @@ for epoch in range(hp.epochs):
                 p_l = pitch_loss.detach().cpu().numpy().item()
                 e_l = energy_loss.detach().cpu().numpy().item()
 
-                logger.add_scalar("duration_loss", p_l)
-                logger.add_scalar("pitch_loss", d_l)
+                logger.add_scalar("duration_loss", d_l)
+                logger.add_scalar("pitch_loss", p_l)
                 logger.add_scalar("energy_loss", e_l)
                 logger.add_scalar("mel_loss", m_l)
                 logger.add_scalar("total_loss", t_l)
