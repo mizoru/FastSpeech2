@@ -5,6 +5,7 @@ from torch import nn
 from torch.utils.data import DataLoader
 from torch.optim.lr_scheduler  import OneCycleLR
 from tqdm import tqdm
+import wandb
 
 
 from src.dataset import get_dataset
@@ -59,73 +60,81 @@ for epoch in range(hp.epochs):
     for i, batchs in enumerate(training_loader):
         # real batch start here
         for j, db in enumerate(batchs):
-            new_steps += 1
-            tqdm_bar.update(1)
-            if new_steps < -1:
-                continue
-            current_step += 1
+            try:
+                new_steps += 1
+                tqdm_bar.update(1)
+                if new_steps < -1:
+                    continue
+                current_step += 1
 
-            logger.set_step(current_step)
-            # Get Data
-            character = db["text"].long().to(device)
-            mel_target = db["mel_target"].float().to(device)
-            duration = db["duration"].int().to(device)
-            pitch = db["f0"].to(device)
-            energy = db["energy"].to(device)
-            mel_pos = db["mel_pos"].long().to(device)
-            src_pos = db["src_pos"].long().to(device)
-            max_mel_len = db["mel_max_len"]
+                logger.set_step(current_step)
+                # Get Data
+                character = db["text"].long().to(device)
+                mel_target = db["mel_target"].float().to(device)
+                duration = db["duration"].int().to(device)
+                pitch = db["f0"].to(device)
+                energy = db["energy"].to(device)
+                mel_pos = db["mel_pos"].long().to(device)
+                src_pos = db["src_pos"].long().to(device)
+                max_mel_len = db["mel_max_len"]
 
-            # Forward
-            mel_output, duration_predictor_output, pitch_prediction, energy_prediction = model(character,
-                                                          src_pos,
-                                                          mel_pos=mel_pos,
-                                                          mel_max_length=max_mel_len,
-                                                          length_target=duration,
-                                                          pitch_target=pitch,
-                                                          energy_target=energy
-                                                          )
+                # Forward
+                mel_output, duration_predictor_output, pitch_prediction, energy_prediction = model(character,
+                                                            src_pos,
+                                                            mel_pos=mel_pos,
+                                                            mel_max_length=max_mel_len,
+                                                            length_target=duration,
+                                                            pitch_target=pitch,
+                                                            energy_target=energy
+                                                            )
 
-            # Cal Loss
-            mel_loss, duration_loss, pitch_loss, energy_loss = criterion(mel_output,
-                                                    duration_predictor_output,
-                                                    pitch_prediction,
-                                                    energy_prediction,
-                                                    mel_target,
-                                                    duration,
-                                                    pitch,
-                                                    energy)
-            total_loss = mel_loss + duration_loss + pitch_loss + energy_loss
+                # Cal Loss
+                mel_loss, duration_loss, pitch_loss, energy_loss = criterion(mel_output,
+                                                        duration_predictor_output,
+                                                        pitch_prediction,
+                                                        energy_prediction,
+                                                        mel_target,
+                                                        duration,
+                                                        pitch,
+                                                        energy)
+                total_loss = mel_loss + duration_loss + pitch_loss + energy_loss
 
-            # Logger
-            t_l = total_loss.detach().cpu().numpy()
-            m_l = mel_loss.detach().cpu().numpy()
-            d_l = duration_loss.detach().cpu().numpy()
-            p_l = pitch_loss.detach().cpu().numpy()
-            e_l = energy_loss.detach().cpu().numpy()
+                # Logger
+                t_l = total_loss.detach().cpu().numpy()
+                m_l = mel_loss.detach().cpu().numpy()
+                d_l = duration_loss.detach().cpu().numpy()
+                p_l = pitch_loss.detach().cpu().numpy()
+                e_l = energy_loss.detach().cpu().numpy()
 
-            logger.add_scalar("duration_loss", p_l)
-            logger.add_scalar("pitch_loss", d_l)
-            logger.add_scalar("energy_loss", e_l)
-            logger.add_scalar("mel_loss", m_l)
-            logger.add_scalar("total_loss", t_l)
+                logger.add_scalar("duration_loss", p_l)
+                logger.add_scalar("pitch_loss", d_l)
+                logger.add_scalar("energy_loss", e_l)
+                logger.add_scalar("mel_loss", m_l)
+                logger.add_scalar("total_loss", t_l)
 
-            # Backward
-            total_loss.backward()
+                # Backward
+                total_loss.backward()
 
-            # Clipping gradients to avoid gradient explosion
-            nn.utils.clip_grad_norm_(
-                model.parameters(), hp.grad_clip_thresh)
-            
-            optimizer.step()
-            optimizer.zero_grad(set_to_none=True)
-            scheduler.step()
+                # Clipping gradients to avoid gradient explosion
+                nn.utils.clip_grad_norm_(
+                    model.parameters(), hp.grad_clip_thresh)
+                
+                optimizer.step()
+                optimizer.zero_grad(set_to_none=True)
+                scheduler.step()
 
-            if current_step-10 % hp.save_step == 0:
+                if current_step-10 % hp.save_step == 0:
+                    os.makedirs(hp.checkpoint_path, exist_ok=True)
+                    torch.save({'model': model.state_dict(), 'optimizer': optimizer.state_dict(
+                    )}, os.path.join(hp.checkpoint_path, 'checkpoint_%d.pth' % current_step))
+                    print("save model at step %d ..." % current_step)
+                
+                if current_step-1 % log_step == 0:
+                    log_predictions(logger, mel_output, mel_target)
+            except Exception as exc:
                 os.makedirs(hp.checkpoint_path, exist_ok=True)
                 torch.save({'model': model.state_dict(), 'optimizer': optimizer.state_dict(
-                )}, os.path.join(hp.checkpoint_path, 'checkpoint_%d.pth' % current_step))
+                    )}, os.path.join(hp.checkpoint_path, 'checkpoint_%d_exc.pth' % current_step))
                 print("save model at step %d ..." % current_step)
-            
-            if current_step-1 % log_step == 0:
-                log_predictions(logger, mel_output, mel_target)
+                wandb.finish()
+                raise exc
