@@ -16,3 +16,4 @@ torchaudio
 wandb
 gdown==4.5.4
 unidecode
+inflect
