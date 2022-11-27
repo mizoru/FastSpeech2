@@ -100,11 +100,11 @@ for epoch in range(hp.epochs):
                 total_loss = mel_loss + duration_loss + pitch_loss + energy_loss
 
                 # Logger
-                t_l = total_loss.detach().cpu().numpy()
-                m_l = mel_loss.detach().cpu().numpy()
-                d_l = duration_loss.detach().cpu().numpy()
-                p_l = pitch_loss.detach().cpu().numpy()
-                e_l = energy_loss.detach().cpu().numpy()
+                t_l = total_loss.detach().cpu().numpy().item()
+                m_l = mel_loss.detach().cpu().numpy().item()
+                d_l = duration_loss.detach().cpu().numpy().item()
+                p_l = pitch_loss.detach().cpu().numpy().item()
+                e_l = energy_loss.detach().cpu().numpy().item()
 
                 logger.add_scalar("duration_loss", p_l)
                 logger.add_scalar("pitch_loss", d_l)
