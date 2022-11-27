@@ -46,8 +46,7 @@ scheduler = OneCycleLR(optimizer, **{
     "pct_start": hp.n_warm_up_step / (len(training_loader) * hp.batch_expand_size * hp.epochs),
     "epochs": hp.epochs,
     "anneal_strategy": "cos",
-    "max_lr": hp.learning_rate,
-    "pct_start": 0.1
+    "max_lr": hp.learning_rate
 })
 
 tqdm_bar = tqdm(total=hp.epochs * len(training_loader) * hp.batch_expand_size - current_step)
