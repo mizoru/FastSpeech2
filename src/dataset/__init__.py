@@ -6,7 +6,7 @@ import tqdm
 
 from src.utils import process_text
 from src.text import text_to_sequence
-from src.data.preprocess import main as preprocess
+from dataset.preprocess import main as preprocess
 
 class BufferDataset(Dataset):
     def __init__(self, buffer, stats):
