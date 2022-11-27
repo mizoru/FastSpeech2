@@ -128,5 +128,5 @@ for epoch in range(hp.epochs):
                 )}, os.path.join(hp.checkpoint_path, 'checkpoint_%d.pth' % current_step))
                 print("save model at step %d ..." % current_step)
             
-            if current_step-1 % log_step:
+            if current_step-1 % log_step == 0:
                 log_predictions(logger, mel_output, mel_target)
