@@ -19,7 +19,8 @@ def build_from_path(in_dir, out_dir):
     # executor = ProcessPoolExecutor(max_workers=4)
     # futures = []
     texts = []
-
+    Path(hp.f0s_path).mkdir(exist_ok=True)
+    Path(hp.energies_path).mkdir(exist_ok=True)
     with open(os.path.join(in_dir, 'metadata.csv'), encoding='utf-8') as f:
         for line in f.readlines():
             if index % 100 == 0:
@@ -50,7 +51,6 @@ def _process_utterance(out_dir, index, wav_path, text):
     
     wav, sr = librosa.load(wav_path, sr=None, dtype=np.float64)
     f0, t = pw.dio(wav, sr, frame_period=frame_period)
-    print(f0.shape, mel_spectrogram.shape)
     assert f0.shape[0] == mel_spectrogram.shape[1], (f0.shape[0], mel_spectrogram.shape[1])
     np.save(hp.f0s_path+f"/{index}", f0)
     np.save(hp.energies_path+f"/{index}", energy)
