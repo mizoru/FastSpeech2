@@ -45,6 +45,7 @@ def get_WaveGlow(): #1WsibBTsuRg_SF2Z6L6NFRTT-NjEy1oTx
         #mv waveglow_256channels_ljs_v2.pt waveglow/pretrained_model/waveglow_256channels.pt
         waveglow_path.mkdir(parents=True)
         waveglow_path = Path("waveglow_256channels_ljs_v2.pt").rename(waveglow_path / "waveglow_256channels.pt")
+    waveglow_path = waveglow_path / "waveglow_256channels.pt"
     device = "cuda" if torch.cuda.is_available() else "cpu"
     wave_glow = torch.load(waveglow_path, map_location=device)['model']
     wave_glow = wave_glow.remove_weightnorm(wave_glow)
