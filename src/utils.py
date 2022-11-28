@@ -10,7 +10,6 @@ import gdown
 
 from src import audio
 import src.hparams
-from src import glow
 
 
 def process_text(train_text_path):
