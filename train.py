@@ -63,7 +63,7 @@ scheduler = OneCycleLR(optimizer, **{
 })
 
 if args.resume:
-    state = torch.load(args.model, map_location=device)
+    state = torch.load(args.resume, map_location=device)
     model.load_state_dict(state["model"])
     optimizer.load_state_dict("model")
 
