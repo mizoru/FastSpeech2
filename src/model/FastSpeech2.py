@@ -254,7 +254,7 @@ class LengthRegulator(nn.Module):
 class VarianceAdaptor(nn.Module):
     """ Variance Adaptor """
 
-    def __init__(self, model_config, stats, offset=1.):
+    def __init__(self, model_config, stats, offset=1., mix_in_portion=0.05):
         super(VarianceAdaptor, self).__init__()
         self.pitch_predictor = VariancePredictor(model_config)
         self.energy_predictor = VariancePredictor(model_config)
@@ -267,7 +267,17 @@ class VarianceAdaptor(nn.Module):
             model_config.quantization_bins, model_config.encoder_dim)
         self.energy_embed = nn.Embedding(
             model_config.quantization_bins, model_config.encoder_dim)
+        self.mix_in_portion = mix_in_portion
 
+    def mix_pred_target(self, pred, target, portion=0.05):
+        B = pred.size(0)
+        shape = [1 for _ in range(pred.ndim)]
+        shape[0] = B
+        mask = (torch.rand(shape) < portion).float()
+        res = mask * pred + (1-mask) * target
+        return res
+        
+    
     def forward(self, x, beta=1.0, gamma=1.0, pitch=None, energy=None):
         offset = self.offset
         pitch_pred = self.pitch_predictor(x)
@@ -275,6 +285,11 @@ class VarianceAdaptor(nn.Module):
         if pitch is not None and energy is not None:
             pitch = torch.bucketize(pitch+offset, self.pitch_bins)
             energy = torch.bucketize(pitch+offset, self.energy_bins)
+            if self.mix_in_portion:
+                pitch_pred_quantized = torch.bucketize(pitch_pred+offset, self.pitch_bins)
+                energy_pred_quantized = torch.bucketize(energy_pred+offset, self.energy_bins)
+                pitch = self.mix_pred_target(pitch_pred_quantized, pitch, self.mix_in_portion)
+                energy = self.mix_pred_target(energy_pred_quantized, energy, self.mix_in_portion)
             x = x + self.pitch_embed(pitch)
             x = x + self.pitch_embed(energy)
             return x, pitch_pred, energy_pred
