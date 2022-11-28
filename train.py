@@ -1,4 +1,5 @@
 import os
+import argparse
 
 import torch
 from torch import nn
@@ -16,6 +17,17 @@ from src.visualizer.wandb import WanDBWriter
 from src.collate import collate_fn
 from src.utils import log_predictions
 
+
+args = argparse.ArgumentParser()
+args.add_argument(
+    "-r",
+    "--resume",
+    default=None,
+    type=str,
+    help="model and optimizer checkpoint file path to resume from (default: None)",
+)
+
+args = args.parse_args()
 
 dataset = get_dataset()
 
@@ -49,6 +61,11 @@ scheduler = OneCycleLR(optimizer, **{
     "anneal_strategy": "cos",
     "max_lr": hp.learning_rate
 })
+
+if args.resume:
+    state = torch.load(args.model, map_location=device)
+    model.load_state_dict(state["model"])
+    optimizer.load_state_dict("model")
 
 tqdm_bar = tqdm(total=hp.epochs * len(training_loader) * hp.batch_expand_size - current_step)
 
@@ -125,16 +142,13 @@ for epoch in range(hp.epochs):
 
                 if (current_step) % hp.save_step == 0:
                     os.makedirs(hp.checkpoint_path, exist_ok=True)
-                    torch.save({'model': model.state_dict(), 'optimizer': optimizer.state_dict(
-                    )}, os.path.join(hp.checkpoint_path, 'checkpoint_%d.pth' % current_step))
+                    torch.save({'model': model.state_dict(), 'optimizer': optimizer.state_dict(),
+                                "scheduler": scheduler.state_dict()},
+                               os.path.join(hp.checkpoint_path, 'checkpoint_%d.pth' % current_step))
                     print("save model at step %d ..." % current_step)
                 
                 if (current_step) % log_step == 0:
                     log_predictions(logger, mel_output, mel_target)
             except Exception as exc:
-                os.makedirs(hp.checkpoint_path, exist_ok=True)
-                torch.save({'model': model.state_dict(), 'optimizer': optimizer.state_dict(
-                    )}, os.path.join(hp.checkpoint_path, 'checkpoint_%d_exc.pth' % current_step))
-                print("save model at step %d ..." % current_step)
                 wandb.finish()
                 raise exc

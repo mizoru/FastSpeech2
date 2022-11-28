@@ -114,3 +114,7 @@ wandb/
 .vscode/
 .idea/
 __MACOSX/
+
+results/
+
+*.pth
