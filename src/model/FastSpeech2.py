@@ -281,7 +281,7 @@ class VarianceAdaptor(nn.Module):
     def forward(self, x, beta=1.0, gamma=1.0, pitch=None, energy=None):
         offset = self.offset
         pitch_pred = self.pitch_predictor(x)
-        energy_pred = self.pitch_predictor(x)
+        energy_pred = self.energy_predictor(x)
         if pitch is not None and energy is not None:
             if self.mix_in_portion:
                 pitch = self.mix_pred_target(pitch_pred, pitch, self.mix_in_portion)
