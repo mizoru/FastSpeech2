@@ -446,8 +446,7 @@ class FastSpeech(nn.Module):
             return output, duration_predictor_output, pitch_prediction, energy_prediction
         else:
             output, mel_pos = self.length_regulator(x, alpha)
-            output = self.variance_adaptor(
-                self, output, beta=beta, gamma=gamma)
+            output = self.variance_adaptor(output, beta=beta, gamma=gamma)
             output = self.decoder(output, mel_pos)
             output = self.mel_linear(output)
             return output
