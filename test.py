@@ -38,7 +38,7 @@ def synthesis(model, texts, device, params, args, WaveGlow):
             directory = Path(args.results)
             directory.mkdir(exist_ok=True)
             # inv_mel_spec(mel, directory / f"{i}_a{alpha}_b{beta}_g{gamma}.wav")
-            waveglow.inference.inference(mel_cuda, WaveGlow, f"{i}_a{alpha}_b{beta}_g{gamma}_waveglow.wav")
+            waveglow.inference.inference(mel_cuda, WaveGlow, directory / f"{i}_a{alpha}_b{beta}_g{gamma}_waveglow.wav")
                     
 
 def main():
