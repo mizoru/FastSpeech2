@@ -10,6 +10,8 @@ from src import hparams as hp
 from src.text import text_to_sequence
 from src.model.FastSpeech2 import FastSpeech
 from src.audio.tools import inv_mel_spec
+from src import waveglow
+from src.utils import get_WaveGlow
 
 def process_texts(texts):
     data_list = list(text_to_sequence(text, hp.text_cleaners) for text in texts)
@@ -28,14 +30,15 @@ def mel_synthesis(model, text, device, alpha=1., beta=1., gamma=1.):
         mel = model.forward(sequence, src_pos, alpha=alpha, beta=beta, gamma=gamma)
     return mel[0].cpu().transpose(0, 1), mel.contiguous().transpose(1, 2)
 
-def synthesis(model, texts, device, params, args):
+def synthesis(model, texts, device, params, args, WaveGlow):
     texts = process_texts(texts)
     for i, text in enumerate(tqdm(texts)):
         for alpha, beta, gamma in zip(params["alpha"], params["beta"], params["gamma"]):
             mel, mel_cuda = mel_synthesis(model, text, device, alpha, beta, gamma)
             directory = Path(args.results)
             directory.mkdir(exist_ok=True)
-            inv_mel_spec(mel, directory / f"{i}_a{alpha}_b{beta}_g{gamma}.wav")
+            # inv_mel_spec(mel, directory / f"{i}_a{alpha}_b{beta}_g{gamma}.wav")
+            waveglow.inference.inference(mel_cuda, WaveGlow, f"{i}_a{alpha}_b{beta}_g{gamma}_waveglow.wav")
                     
 
 def main():
@@ -81,7 +84,8 @@ def main():
         params = json.load(file)
     with open(args.text, "r") as file:
         texts = file.readlines()
-    synthesis(model, texts, device, params, args)  
+    WaveGlow = get_WaveGlow()
+    synthesis(model, texts, device, params, args, WaveGlow)  
 
 if __name__ == "__main__":
     main()
