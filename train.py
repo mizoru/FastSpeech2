@@ -65,7 +65,7 @@ scheduler = OneCycleLR(optimizer, **{
 if args.resume:
     state = torch.load(args.resume, map_location=device)
     model.load_state_dict(state["model"])
-    optimizer.load_state_dict("model")
+    optimizer.load_state_dict(state["optimizer"])
 
 tqdm_bar = tqdm(total=hp.epochs * len(training_loader) * hp.batch_expand_size - current_step)
 
