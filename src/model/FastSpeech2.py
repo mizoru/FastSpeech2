@@ -289,13 +289,13 @@ class VarianceAdaptor(nn.Module):
             pitch = torch.bucketize(pitch+offset, self.pitch_bins)
             energy = torch.bucketize(pitch+offset, self.energy_bins)
             x = x + self.pitch_embed(pitch)
-            x = x + self.pitch_embed(energy)
+            x = x + self.energy_embed(energy)
             return x, pitch_pred, energy_pred
         elif pitch is None and energy is None:
             pitch = torch.bucketize(pitch_pred*beta+offset, self.pitch_bins)
             energy = torch.bucketize(energy_pred*gamma+offset, self.energy_bins)
             x = x + self.pitch_embed(pitch)
-            x = x + self.pitch_embed(energy)
+            x = x + self.energy_embed(energy)
             return x
         else:
             raise Exception("Either both or none of energy, pitch")
