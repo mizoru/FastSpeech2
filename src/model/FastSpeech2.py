@@ -283,13 +283,11 @@ class VarianceAdaptor(nn.Module):
         pitch_pred = self.pitch_predictor(x)
         energy_pred = self.pitch_predictor(x)
         if pitch is not None and energy is not None:
+            if self.mix_in_portion:
+                pitch = self.mix_pred_target(pitch_pred, pitch, self.mix_in_portion)
+                energy = self.mix_pred_target(energy_pred, energy, self.mix_in_portion)
             pitch = torch.bucketize(pitch+offset, self.pitch_bins)
             energy = torch.bucketize(pitch+offset, self.energy_bins)
-            if self.mix_in_portion:
-                pitch_pred_quantized = torch.bucketize(pitch_pred+offset, self.pitch_bins)
-                energy_pred_quantized = torch.bucketize(energy_pred+offset, self.energy_bins)
-                pitch = self.mix_pred_target(pitch_pred_quantized, pitch, self.mix_in_portion)
-                energy = self.mix_pred_target(energy_pred_quantized, energy, self.mix_in_portion)
             x = x + self.pitch_embed(pitch)
             x = x + self.pitch_embed(energy)
             return x, pitch_pred, energy_pred
