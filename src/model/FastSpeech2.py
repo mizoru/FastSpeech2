@@ -273,7 +273,7 @@ class VarianceAdaptor(nn.Module):
         B = pred.size(0)
         shape = [1 for _ in range(pred.ndim)]
         shape[0] = B
-        mask = (torch.rand(shape) < portion).float()
+        mask = (torch.rand(shape, device=pred.device) < portion, ).float()
         res = mask * pred + (1-mask) * target
         return res
         
