@@ -27,3 +27,6 @@ python train.py -r checkpoint1.pth
 ## Results
 
 You can find the final inference-time predictions in wavresults.zip
+
+## Training Logs
+You can find the report on the training (here)[https://wandb.ai/mizoru/FastSpeech2/reports/Training-FastSpeech2--VmlldzozMDUxMDA1] and also look at my (WandB logs)[https://wandb.ai/mizoru/FastSpeech2]
